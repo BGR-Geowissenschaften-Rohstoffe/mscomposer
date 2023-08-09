@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Torney"
+  given-names: "Larissa"
+- family-names: "Blaschek"
+  given-names: "Michael"
+  orcid: "https://orcid.org/0000-0003-3042-6195"
+- family-names: "Görgen"
+  given-names: "Darius"
+title: "mscomposer - An R package for creating multi-spectral image composites"
+version: 0.0.1
+doi: 10.25928/5yx7-x825
+date-released: 2023-07-18
+url: "https://github.com/BGR-Geowissenschaften-Rohstoffe/mscomposer"

@@ -1,0 +1,123 @@
+---
+title: "Usage of mscmposer on the CODE-DE platform"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Usage of mscmposer on the CODE-DE platform}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+
+```{r setup}
+library(sf)
+library(gdalcubes)
+library(mscomposer)
+```
+
+
+This vignette is meant to show the how the package can be used on the [CODE-DE](https://code-de.org/)
+platform. This platform requires a subscription plan in order to let you create 
+virtual machines (VMs) on which you can use the `{mscomposer}` package.
+
+Here, we assume that you signed-up for a subscription and have a Ubuntu based VM 
+running with the CODE-DE data platform mounted. One easy way to achieve this during
+the setup of your VM, is documented in the `{mscomposer}` repository. We explain 
+there how to set up a docker container on your VM with `{mscomposer}` installed and
+which is reachable via an R Studio interface through your web browser.
+
+With this setup, the CODE-DE data platform will be mounted, both on the host VM 
+and the docker container under the following path `/codede/`.
+We can thus work with the Sentinel-2 data without the need to download to our local
+machine. The first step consists of querying the EOFinder API, which Sentinel-2
+scenes intersect with our area of interest (AOI). Remember, that `query_s2_codede()`
+expects the aoi object to be in uprojected coordinates.
+
+```{r eofinder}
+aoi <- st_read(system.file("aoi_S2.gpkg", package = "mscomposer"))
+(s2_matches <- query_s2_codede(
+  aoi = aoi,
+  level = "LEVEL2A",
+  product = "L2A-MAJA",
+  cloudcover = 10,
+  start = "2022-01-01",
+  end = "2022-12-31"
+))
+
+```
+
+The `s2_matches` is an sf object with the spatial footprint of matching acquisitions
+as the geometry and some metadata information as attributes. Assuming that
+you are working on the CODE-DE platform, the column `productIdentifier` is of 
+special interest, because this variable indicates the paths to the respective
+acquisitions under `/codede/`. We can thus list all matching `*.tif` files for 
+your composite processing.
+
+```{r list-s2, eval = FALSE}
+root_paths <- s2_matches$productIdentifier
+s2_files <- list.files(root_paths, pattern = "*.tif", full.names = TRUE, recursive = TRUE)
+```
+
+Note, that we cannot actully run the above code when building this vignette, because
+it will only find any files if run on a machine on CODE-DE. Given that assumption,
+we than can proceed using `{ms_composer}` as laid out in the README, by firts 
+constructing a view and then a composite based on the matched files and a specific
+collection format:
+
+```{r composer, eval = FALSE}
+
+harz_view <- ms_view(
+  aoi, 
+  srs = st_crs(aoi_utm), 
+  dt = "P30D", 
+  dx = 20, 
+  dy = 20, 
+  start = "2022-01-01", 
+  end = "2022-12-31", 
+  agg = "mean", 
+  rsmp = "bilinear"
+)
+
+ms_compose(
+  files = s2_files,
+  format= system.file("S2-L2A-MAJA-CODEDE.json", package = "mscomposer"),
+  view = harz_view, 
+  col = "harz_2022_maja.sqlite", 
+  mask = image_mask("CLOUDS", min = 1, max = 255), 
+  bands = c("B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B11", "B12"),
+  reducers = "median",
+  indices = list(NDVI = "(B8-B4)/(B8+B4)"),
+  filters = list(NDVI = "NDVI < 0.2"),
+  outdir = ".",
+  prefix = "harzvorland-composite-maja-"
+)
+
+```
+
+In case that you do not have a subscription plan that allows you to create
+a VM on CODE-DE, you may still create an account that will enable you to download
+data to your local machine. `{mscomposer}` allows you to download matching 
+Sentinel-2 acquisitions in case you provide it with an API key used to identify you 
+as a subscribed user to CODE-DE. The below function call will download
+the matching scenes to the current directory as zip files. You may wish to extract
+the zip files after the download, or you may relay on GDAL's ability to read
+files directly from zips using the `/vsizip/` driver. 
+
+```{r download, eval = FALSE}
+download_s2_codede(
+  s2_matches,
+  key = "<your-api-key>",
+  outdir = "."
+)
+
+```
+
+
+

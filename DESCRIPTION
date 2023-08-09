@@ -1,0 +1,34 @@
+Package: mscomposer
+Title: Creation of Mulit-Spectral Image Composites
+Version: 0.1.0
+Authors@R: 
+    person("Darius A.", "Görgen", , "darius.goergen@bgr.de", role = c("aut", "cre"))
+Description: A simple package with a specific use-case: The creation of an image
+  composite of spatially and temporally unaligned earth observation data. This
+  package supplies you with a single function based on the gdalcubes package 
+  which is highly customizable to your project needs. You can almost certainly
+  make it work with any mulit-spectral data set and control how you temporallly
+  aggregate your data to get a mono- or multi-temporal wall-to-wall coverage
+  of your study area.
+Depends:
+  R (>= 4.1.0)
+Imports: 
+  caret,
+  dplyr,
+  gdalcubes,
+  glue,
+  httr,
+  purrr,
+  sf,
+  terra,
+  tidyr,
+  tibble
+Suggests:
+    knitr,
+    randomForest,
+    rmarkdown
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+VignetteBuilder: knitr

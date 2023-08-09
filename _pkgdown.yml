@@ -1,0 +1,13 @@
+url: ~
+template:
+  bootstrap: 5
+  bslib:
+    fg: "#00416e"
+    bg: "#ffffff"
+    primary: "#f5be5a"
+    link-color: "#d78a2b"
+    link-hover-color: "#f5be5a"
+
+authors:
+  Darius A. Görgen:
+    href: http://dariusgoergen.com/
